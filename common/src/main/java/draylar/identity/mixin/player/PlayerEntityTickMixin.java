@@ -52,17 +52,21 @@ public abstract class PlayerEntityTickMixin extends LivingEntity {
             PlayerAbilities.setCooldown(player, Math.max(0, data.getAbilityCooldown() - 1));
             PlayerAbilities.sync(player);
 
-            // Sync flight abilities with identity state
-            boolean shouldAllowFlight = Identity.hasFlyingPermissions(player);
-            if (shouldAllowFlight != player.getAbilities().allowFlying) {
-                if (shouldAllowFlight) {
-                    FlightHelper.grantFlightTo(player);
-                    player.getAbilities().setFlySpeed(IdentityConfig.getInstance().flySpeed());
-                } else {
-                    FlightHelper.revokeFlight(player);
-                    player.getAbilities().setFlySpeed(0.05f);
+            // Only sync flight state if the player is currently morphed
+            //   to not conflict with other mods that may modify flight state
+            if (identity != null) {
+                // Sync flight abilities with identity state
+                boolean shouldAllowFlight = Identity.hasFlyingPermissions(player);
+                if (shouldAllowFlight != player.getAbilities().allowFlying) {
+                    if (shouldAllowFlight) {
+                        FlightHelper.grantFlightTo(player);
+                        player.getAbilities().setFlySpeed(IdentityConfig.getInstance().flySpeed());
+                    } else {
+                        FlightHelper.revokeFlight(player);
+                        player.getAbilities().setFlySpeed(0.05f);
+                    }
+                    player.sendAbilitiesUpdate();
                 }
-                player.sendAbilitiesUpdate();
             }
 
             // Validate villager profession bindings periodically
